@@ -30,7 +30,6 @@ document.addEventListener("DOMContentLoaded", () => {
   setupAdminDashboard(supabaseClient, config.adminPasscode);
 
   // 8. INTERACTIVE AMBIENT SOUND & MOUSE GLOW
-  setupAmbientAudio();
   setupMouseGlow();
 });
 
