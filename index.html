@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GK's 40th Birthday Dinner | Hyatt Regency Harare The Meikles</title>
+  
+  <!-- Google Fonts: Cinzel, Cormorant Garamond, Montserrat -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Supabase JS Client & Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Ambient Glow Cursor Follower -->
+  <div class="ambient-glow" id="ambientGlow"></div>
+
+  <!-- Top Floating Controls -->
+  <div class="top-nav">
+    <button class="icon-btn" id="audioToggleBtn" title="Toggle Ambient Lounge Audio" aria-label="Toggle Audio">
+      <svg id="audioIcon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+        <path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.08"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- ==============================================================================
+       ENVELOPE WAX-SEAL CEREMONY (Interactive Opening)
+       ============================================================================== -->
+  <div class="envelope-overlay" id="envelopeOverlay">
+    <div class="envelope-container" id="envelopeContainer" title="Click to break seal & open invitation">
+      <div class="envelope">
+        <div class="envelope-border-inner"></div>
+        <div class="envelope-front-preview">
+          <div class="to-text">You are cordially invited to</div>
+          <div class="guest-title gold-foil" id="envelopeCelebrant">GK's 40th Birthday Dinner</div>
+          <p style="font-size: 0.8rem; color: var(--gold-sheen); letter-spacing: 2px;">HYATT REGENCY HARARE THE MEIKLES</p>
+        </div>
+        <div class="wax-seal" id="waxSeal">
+          <span class="wax-seal-monogram" id="sealMonogram">GK</span>
+        </div>
+      </div>
+    </div>
+    <div class="envelope-instruction">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 5v14M19 12l-7 7-7-7"/>
+      </svg>
+      Tap the Gold Wax Seal to Open
+    </div>
+  </div>
+
+  <!-- ==============================================================================
+       MAIN INVITATION CARD
+       ============================================================================== -->
+  <main class="main-wrapper">
+    <div class="container">
+      <article class="invitation-card">
+        
+        <!-- Art Deco Corner Accents -->
+        <div class="ornament-frame"></div>
+        <div class="ornament-corner top-left"></div>
+        <div class="ornament-corner top-right"></div>
+        <div class="ornament-corner bottom-left"></div>
+        <div class="ornament-corner bottom-right"></div>
+
+        <!-- Crest Header (Royal Crown with Hidden Admin Trigger) -->
+        <header class="crest-header">
+          <div class="crest-crown" id="secretCrownAdmin" title="GK's 40th Royal Crown" role="button" tabindex="0">
+            <!-- Royal Crown SVG matching flyer -->
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" class="crown-svg">
+              <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+            </svg>
+          </div>
+          <p class="invitation-subheading">You Are Cordially Invited To</p>
+          <h1 class="celebrant-title gold-foil" id="cardCelebrantName">GK's 40th</h1>
+          <p class="event-subtitle" id="cardEventTitle">Birthday Dinner</p>
+          
+          <div class="divider-ornament">
+            <div class="line"></div>
+            <div class="diamond"></div>
+            <div class="line"></div>
+          </div>
+
+          <p id="cardTagline" style="max-width: 580px; margin: 0 auto; color: var(--gold-light); font-size: 0.9rem; letter-spacing: 3px; text-transform: uppercase; font-weight: 500;">
+            Good Food • Great Company • A Night to Remember
+          </p>
+          <p id="cardSubMotto" style="font-family: var(--font-display); font-size: 1.35rem; color: var(--text-gold); font-style: italic; margin-top: 6px;">
+            A Memorable Night — Life Begins at 40
+          </p>
+        </header>
+
+        <!-- SURPRISE PARTY BANNER -->
+        <section class="surprise-banner-card" id="surpriseCard">
+          <div class="surprise-icon">🎁</div>
+          <div class="surprise-content">
+            <h3 class="gold-foil">Surprise!</h3>
+            <p>PLEASE DON'T TELL THE BIRTHDAY BOY.</p>
+          </div>
+        </section>
+
+        <!-- Live Countdown Timer -->
+        <section class="countdown-section" aria-label="Event Countdown">
+          <p class="countdown-title">Countdown to the Celebration</p>
+          <div class="countdown-grid">
+            <div class="countdown-box">
+              <div class="countdown-number gold-text" id="cdDays">00</div>
+              <div class="countdown-label">Days</div>
+            </div>
+            <div class="countdown-box">
+              <div class="countdown-number gold-text" id="cdHours">00</div>
+              <div class="countdown-label">Hours</div>
+            </div>
+            <div class="countdown-box">
+              <div class="countdown-number gold-text" id="cdMinutes">00</div>
+              <div class="countdown-label">Minutes</div>
+            </div>
+            <div class="countdown-box">
+              <div class="countdown-number gold-text" id="cdSeconds">00</div>
+              <div class="countdown-label">Seconds</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Key Details Grid (Date, Venue, Time, Dress Code) -->
+        <section class="details-grid">
+          
+          <!-- When (Date) -->
+          <div class="detail-card">
+            <div class="detail-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </div>
+            <h3>Date</h3>
+            <p class="highlight" id="cardDateFormatted">17 December 2026</p>
+            <p id="cardDayOfWeek">Thursday Evening</p>
+            <div class="action-links">
+              <a href="#" class="pill-link" id="googleCalBtn" target="_blank" rel="noopener">
+                + Google Cal
+              </a>
+              <a href="#" class="pill-link" id="icalBtn">
+                + Apple / iCal
+              </a>
+            </div>
+          </div>
+
+          <!-- Venue -->
+          <div class="detail-card">
+            <div class="detail-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+            </div>
+            <h3>Venue</h3>
+            <p class="highlight" id="cardVenueName">Hyatt Regency Harare The Meikles</p>
+            <p id="cardVenueAddress">Harare, Zimbabwe</p>
+            <div class="action-links">
+              <a href="#" class="pill-link" id="venueMapLink" target="_blank" rel="noopener">
+                View on Map
+              </a>
+            </div>
+          </div>
+
+          <!-- Time -->
+          <div class="detail-card">
+            <div class="detail-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <h3>Time</h3>
+            <p class="highlight" id="cardTimeFormatted">5 PM – 10 PM</p>
+            <p style="font-size: 0.85rem; color: var(--gold-sheen);">Arrive promptly at 5:00 PM</p>
+          </div>
+
+          <!-- Attire -->
+          <div class="detail-card">
+            <div class="detail-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.47a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.47a2 2 0 00-1.34-2.23z"></path>
+              </svg>
+            </div>
+            <h3>Dress Code</h3>
+            <p class="highlight" id="cardDressCode">Black Tie</p>
+            <p id="cardDressCodeDesc">Tuxedos & Formal Evening Gowns</p>
+          </div>
+
+        </section>
+
+        <!-- ==============================================================================
+             RSVP SECTION & SUPABASE FORM
+             ============================================================================== -->
+        <section class="rsvp-section" id="rsvp">
+          <div class="section-header">
+            <h2 class="section-title gold-foil">Kindly RSVP</h2>
+            <p class="section-caption">Kindly RSVP by <span id="cardRsvpDeadline" style="color: var(--gold-sheen); font-weight: 600;">31 October 2026</span></p>
+          </div>
+
+          <!-- Host Contact Card (Sarah Mudzingwa) -->
+          <div class="host-contact-card">
+            <div class="host-contact-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+            </div>
+            <div class="host-contact-info">
+              <span class="host-label">Organizer & Contact</span>
+              <h4 class="host-name" id="rsvpHostName">Sarah Mudzingwa</h4>
+              <p class="host-phone">
+                <a href="tel:0773072444" id="rsvpPhoneLink">📞 077 307 2444</a>
+              </p>
+            </div>
+            <div class="host-contact-actions">
+              <a href="https://wa.me/263773072444?text=Hi%20Sarah,%20regarding%20GK's%2040th%20Birthday%20Dinner%20RSVP:" class="pill-link" target="_blank" rel="noopener">
+                💬 WhatsApp Sarah
+              </a>
+            </div>
+          </div>
+
+          <div class="rsvp-box">
+            <form id="rsvpForm">
+              <!-- Attendance Choice -->
+              <div class="form-group">
+                <label>Will you be joining us? *</label>
+                <div class="radio-chips">
+                  <label class="radio-chip-option">
+                    <input type="radio" name="attendance" value="attending" checked required>
+                    <div class="radio-chip-label">
+                      <span class="chip-title">✨ Joyfully Accepts</span>
+                      <span class="chip-sub">Ready to celebrate GK's 40th</span>
+                    </div>
+                  </label>
+                  <label class="radio-chip-option">
+                    <input type="radio" name="attendance" value="declined" required>
+                    <div class="radio-chip-label">
+                      <span class="chip-title">🥂 Regretfully Declines</span>
+                      <span class="chip-sub">Sending warm wishes</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Full Name -->
+              <div class="form-group">
+                <label for="fullName">Your Full Name *</label>
+                <input type="text" id="fullName" class="form-input" placeholder="e.g. Tendai Chikore" required>
+              </div>
+
+              <!-- Phone / WhatsApp -->
+              <div class="form-group">
+                <label for="phone">Phone / WhatsApp Number *</label>
+                <input type="tel" id="phone" class="form-input" placeholder="e.g. 077 123 4567" required>
+              </div>
+
+              <!-- Attendance conditional fields (Plus-one) -->
+              <div id="attendingDetails">
+                <!-- Guest Count -->
+                <div class="form-group">
+                  <label for="guestCount">Party Size</label>
+                  <select id="guestCount" class="form-select">
+                    <option value="1">1 Person (Myself only)</option>
+                    <option value="2">2 Persons (Myself + 1 Companion)</option>
+                  </select>
+                </div>
+
+                <!-- Plus One Name (if 2 guests) -->
+                <div class="form-group" id="plusOneGroup" style="display: none;">
+                  <label for="plusOneName">Companion / Plus-One Full Name</label>
+                  <input type="text" id="plusOneName" class="form-input" placeholder="Full name of your partner/guest">
+                </div>
+              </div>
+
+              <!-- Birthday Note / Wishes -->
+              <div class="form-group">
+                <label for="wishes">Personal Birthday Wish for GK</label>
+                <textarea id="wishes" class="form-textarea" rows="3" placeholder="Leave a heartfelt message, memory, or wish for GK..."></textarea>
+              </div>
+
+              <!-- Submit Button -->
+              <button type="submit" class="gold-btn" id="submitBtn">
+                <span id="btnText">Confirm RSVP</span>
+                <span class="spinner" id="btnSpinner" style="display: none;"></span>
+              </button>
+
+              <!-- Status Alert Box -->
+              <div class="alert-box" id="formAlert"></div>
+            </form>
+          </div>
+        </section>
+
+        <!-- Card Footer -->
+        <footer class="card-footer">
+          <p class="footer-quote">"We look forward to celebrating with you!"</p>
+          <p class="footer-credit">Hyatt Regency Harare The Meikles • 17 December 2026</p>
+        </footer>
+
+      </article>
+    </div>
+  </main>
+
+  <!-- ==============================================================================
+       ADMIN / HOST GUEST LIST MODAL (For Sarah Mudzingwa)
+       ============================================================================== -->
+  <div class="modal-overlay" id="adminModal">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h2 class="gold-foil">Host RSVP Dashboard (Sarah)</h2>
+        <button class="modal-close" id="adminCloseBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Passcode prompt (if locked) -->
+        <div id="adminAuthSection">
+          <p style="margin-bottom: 12px; color: var(--text-muted);">Please enter the Host Passcode to view RSVP submissions:</p>
+          <div style="display: flex; gap: 10px;">
+            <input type="password" id="adminPassInput" class="form-input" placeholder="Enter host passcode">
+            <button class="gold-btn" id="adminUnlockBtn" style="width: auto; padding: 12px 20px;">Unlock</button>
+          </div>
+          <p id="adminErrorMsg" style="color: #f87171; font-size: 0.85rem; margin-top: 8px; display: none;">Invalid Passcode</p>
+          <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 8px;">(Default passcode configured in config.js is: <code>gk40th</code>)</p>
+        </div>
+
+        <!-- Dashboard View (shown after correct passcode) -->
+        <div id="adminDataSection" style="display: none;">
+          <!-- Summary Counters -->
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-value" id="statTotal">0</div>
+              <div class="stat-label">Total Responses</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="statAttending" style="color: #4ade80;">0</div>
+              <div class="stat-label">Attending</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="statHeadcount" style="color: var(--gold-sheen);">0</div>
+              <div class="stat-label">Total Headcount</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="statDeclined" style="color: #f87171;">0</div>
+              <div class="stat-label">Declined</div>
+            </div>
+          </div>
+
+          <!-- Action buttons for Host -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <span style="font-size: 0.85rem; color: var(--gold-light); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">Guest Submissions</span>
+            <div style="display: flex; gap: 8px;">
+              <button class="pill-link" id="refreshRsvpBtn" style="cursor: pointer;">Refresh</button>
+              <button class="pill-link" id="exportCsvBtn" style="cursor: pointer;">Export CSV</button>
+            </div>
+          </div>
+
+          <!-- Guest List Table -->
+          <div class="admin-table-container">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Guest Name</th>
+                  <th>Status</th>
+                  <th>Guests</th>
+                  <th>Contact</th>
+                  <th>Birthday Wish / Message</th>
+                </tr>
+              </thead>
+              <tbody id="guestTableBody">
+                <tr>
+                  <td colspan="5" style="text-align: center; color: var(--text-muted);">Loading RSVPs...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
