@@ -160,11 +160,14 @@ function initEnvelopeExperience() {
     // 4. Trigger golden celebratory confetti burst on opening
     triggerGoldConfetti();
 
-    // 5. Add opening animation class
-    overlay.classList.add("opened");
+    // 5. Open flap animation
+    container.classList.add("opened");
 
-    // 6. Scroll smoothly to top of card
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // 6. Smoothly fade overlay to reveal main card
+    setTimeout(() => {
+      overlay.classList.add("opened");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 450);
   }
 
   container.addEventListener("click", openEnvelope);
