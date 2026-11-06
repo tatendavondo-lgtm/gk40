@@ -522,33 +522,46 @@ function setupAdminDashboard(supabaseClient, adminPasscode) {
 
   if (refreshBtn) refreshBtn.addEventListener("click", loadData);
 
-  // CSV Export
+  // CSV Export (Reliable Blob Download with UTF-8 BOM for Excel)
   if (exportBtn) {
-    exportBtn.addEventListener("click", () => {
-      if (!currentRsvps.length) {
-        alert("No RSVP data to export.");
-        return;
+    exportBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      const headers = ["Full Name", "Attendance Status", "Guest Count", "Plus One Companion", "Phone / WhatsApp", "Birthday Wish", "Submitted At"];
+      
+      let rows = [];
+      if (currentRsvps && currentRsvps.length > 0) {
+        rows = currentRsvps.map(r => [
+          `"${(r.full_name || "").replace(/"/g, '""')}"`,
+          r.attendance === "attending" ? "Attending" : "Declined",
+          r.guest_count || (r.attendance === "attending" ? 1 : 0),
+          `"${(r.plus_one_name || "").replace(/"/g, '""')}"`,
+          `"${(r.phone || "").replace(/"/g, '""')}"`,
+          `"${(r.wishes || "").replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`,
+          `"${r.created_at || ""}"`
+        ]);
       }
 
-      const headers = ["Name", "Status", "Guest Count", "Plus One Name", "Phone / WhatsApp", "Birthday Wish", "Submitted At"];
-      const rows = currentRsvps.map(r => [
-        `"${(r.full_name || "").replace(/"/g, '""')}"`,
-        r.attendance || "",
-        r.guest_count || 0,
-        `"${(r.plus_one_name || "").replace(/"/g, '""')}"`,
-        `"${(r.phone || "").replace(/"/g, '""')}"`,
-        `"${(r.wishes || "").replace(/"/g, '""')}"`,
-        r.created_at || ""
-      ]);
+      // Add UTF-8 BOM so Excel opens it cleanly without encoding glitches
+      const csvString = "\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\r\n");
+      const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+      const filename = `gk_40th_rsvp_guest_list_${new Date().toISOString().split("T")[0]}.csv`;
 
-      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `gk_40th_rsvp_guest_list_${new Date().toISOString().split("T")[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      if (window.navigator && window.navigator.msSaveBlob) {
+        window.navigator.msSaveBlob(blob, filename);
+      } else {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", filename);
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }, 300);
+      }
     });
   }
 }
