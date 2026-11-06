@@ -35,7 +35,7 @@ window.EVENT_CONFIG = {
   rsvpHost: "Sarah Mudzingwa",
   rsvpPhone: "077 307 2444",
   rsvpPhoneRaw: "+263773072444", // Zimbabwe country code for WhatsApp / Tel
-  rsvpDeadline: "31 October 2026",
+  rsvpDeadline: "26th of November",
 
   // SUPABASE CONFIGURATION
   supabase: {
