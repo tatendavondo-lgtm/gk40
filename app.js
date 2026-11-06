@@ -146,19 +146,24 @@ function initEnvelopeExperience() {
   }
 
   function openEnvelope() {
-    // 1. Enter Full Screen Mode
+    // 1. Mobile Haptic Vibration
+    if (navigator.vibrate) {
+      try { navigator.vibrate([35, 45, 35]); } catch (e) {}
+    }
+
+    // 2. Enter Full Screen Mode
     triggerFullScreen();
 
-    // 2. Play celebratory break sound effect
+    // 3. Play celebratory break sound effect
     playWaxSealSound();
 
-    // 3. Trigger golden celebratory confetti burst on opening
+    // 4. Trigger golden celebratory confetti burst on opening
     triggerGoldConfetti();
 
-    // 4. Add opening animation class
+    // 5. Add opening animation class
     overlay.classList.add("opened");
 
-    // 5. Scroll smoothly to top of card
+    // 6. Scroll smoothly to top of card
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -359,6 +364,9 @@ function setupRsvpForm(supabaseClient) {
       }
 
       // Success feedback
+      if (navigator.vibrate) {
+        try { navigator.vibrate([40, 60, 40]); } catch (e) {}
+      }
       triggerGoldConfetti();
       alertBox.textContent = attendance === "attending" 
         ? `Thank you, ${fullName}! Your RSVP has been confirmed. We look forward to celebrating with you in style!`
