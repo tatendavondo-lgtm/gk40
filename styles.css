@@ -907,7 +907,14 @@ body {
 }
 
 .radio-chip-option input[type="radio"] {
-  display: none;
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  clip: rect(0, 0, 0, 0);
+  margin: -1px;
+  overflow: hidden;
 }
 
 .radio-chip-label {

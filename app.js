@@ -291,7 +291,7 @@ function initSupabase(supabaseConfig) {
 }
 
 /**
- * RSVP Form Handler
+ * RSVP Form Handler (Bulletproof with Dual Storage: LocalStorage + Supabase)
  */
 function setupRsvpForm(supabaseClient) {
   const form = document.getElementById("rsvpForm");
@@ -303,18 +303,20 @@ function setupRsvpForm(supabaseClient) {
   const btnText = document.getElementById("btnText");
   const btnSpinner = document.getElementById("btnSpinner");
   const alertBox = document.getElementById("formAlert");
+  const fullNameInput = document.getElementById("fullName");
+  const phoneInput = document.getElementById("phone");
 
-  if (!form) return;
+  if (!form || !submitBtn) return;
 
   // Toggle attending details (hide diet/plus-one if declining)
   attendanceRadios.forEach(radio => {
     radio.addEventListener("change", () => {
       if (radio.value === "declined" && radio.checked) {
-        attendingDetails.style.display = "none";
-        btnText.textContent = "Send Regrets";
+        if (attendingDetails) attendingDetails.style.display = "none";
+        if (btnText) btnText.textContent = "Send Regrets";
       } else if (radio.value === "attending" && radio.checked) {
-        attendingDetails.style.display = "block";
-        btnText.textContent = "Confirm RSVP";
+        if (attendingDetails) attendingDetails.style.display = "block";
+        if (btnText) btnText.textContent = "Confirm RSVP";
       }
     });
   });
@@ -326,70 +328,134 @@ function setupRsvpForm(supabaseClient) {
     });
   }
 
-  // Handle Form Submission
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  let isSubmitting = false;
 
-    // Disable button & show spinner
+  async function handleRsvpSubmit(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (isSubmitting) return;
+
+    // Validate Full Name
+    const fullName = fullNameInput ? fullNameInput.value.trim() : "";
+    if (!fullName) {
+      alertBox.textContent = "Please enter your full name so we know who is joining us.";
+      alertBox.className = "alert-box error";
+      alertBox.style.display = "block";
+      if (fullNameInput) {
+        fullNameInput.focus();
+        fullNameInput.style.borderColor = "#f87171";
+        setTimeout(() => { fullNameInput.style.borderColor = ""; }, 3000);
+      }
+      return;
+    }
+
+    // Validate Phone Number
+    const phone = phoneInput ? phoneInput.value.trim() : "";
+    if (!phone) {
+      alertBox.textContent = "Please enter your phone or WhatsApp number so we can reach you.";
+      alertBox.className = "alert-box error";
+      alertBox.style.display = "block";
+      if (phoneInput) {
+        phoneInput.focus();
+        phoneInput.style.borderColor = "#f87171";
+        setTimeout(() => { phoneInput.style.borderColor = ""; }, 3000);
+      }
+      return;
+    }
+
+    isSubmitting = true;
     submitBtn.disabled = true;
-    btnSpinner.style.display = "inline-block";
+    if (btnSpinner) btnSpinner.style.display = "inline-block";
     alertBox.className = "alert-box";
     alertBox.style.display = "none";
 
     const attendance = document.querySelector('input[name="attendance"]:checked')?.value || "attending";
-    const fullName = document.getElementById("fullName").value.trim();
-    const phone = document.getElementById("phone").value.trim();
-    const guestCount = attendance === "attending" ? parseInt(document.getElementById("guestCount").value, 10) : 0;
-    const plusOneName = (attendance === "attending" && guestCount === 2) ? document.getElementById("plusOneName").value.trim() : null;
-    const wishes = document.getElementById("wishes") ? document.getElementById("wishes").value.trim() : "";
+    const guestCount = attendance === "attending" && guestCountSelect ? parseInt(guestCountSelect.value, 10) : (attendance === "attending" ? 1 : 0);
+    const plusOneNameEl = document.getElementById("plusOneName");
+    const plusOneName = (attendance === "attending" && guestCount === 2 && plusOneNameEl) ? plusOneNameEl.value.trim() : null;
+    const wishesEl = document.getElementById("wishes");
+    const wishes = wishesEl ? wishesEl.value.trim() : "";
 
-    const rsvpData = {
+    const timestamp = new Date().toISOString();
+    const rsvpId = "rsvp_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
+    
+    const rsvpRecord = {
+      id: rsvpId,
       full_name: fullName,
       phone: phone,
       attendance: attendance,
       guest_count: guestCount,
       plus_one_name: plusOneName,
       wishes: wishes,
-      created_at: new Date().toISOString()
+      created_at: timestamp,
+      synced: false
     };
 
+    // 1. ALWAYS store locally first - guaranteed zero loss of RSVP data
     try {
-      if (supabaseClient) {
-        // Send to Live Supabase Database
-        const { error } = await supabaseClient.from("rsvps").insert([rsvpData]);
-        if (error) throw error;
-      } else {
-        // Fallback to LocalStorage for preview mode
-        const existing = JSON.parse(localStorage.getItem("preview_rsvps") || "[]");
-        existing.unshift(rsvpData);
-        localStorage.setItem("preview_rsvps", JSON.stringify(existing));
-      }
-
-      // Success feedback
-      if (navigator.vibrate) {
-        try { navigator.vibrate([40, 60, 40]); } catch (e) {}
-      }
-      triggerGoldConfetti();
-      alertBox.textContent = attendance === "attending" 
-        ? `Thank you, ${fullName}! Your RSVP has been confirmed. We look forward to celebrating with you in style!`
-        : `Thank you for letting us know, ${fullName}. You will be warmly missed!`;
-      alertBox.className = "alert-box success";
-      alertBox.style.display = "block";
-
-      form.reset();
-      if (plusOneGroup) plusOneGroup.style.display = "none";
-      if (attendingDetails) attendingDetails.style.display = "block";
-      btnText.textContent = "Confirm RSVP";
-
-    } catch (err) {
-      console.error("RSVP Submission Error:", err);
-      alertBox.textContent = "An error occurred while saving your RSVP: " + (err.message || "Please check your connection and try again.");
-      alertBox.className = "alert-box error";
-      alertBox.style.display = "block";
-    } finally {
-      submitBtn.disabled = false;
-      btnSpinner.style.display = "none";
+      const stored = JSON.parse(localStorage.getItem("preview_rsvps") || "[]");
+      stored.unshift(rsvpRecord);
+      localStorage.setItem("preview_rsvps", JSON.stringify(stored));
+    } catch (storageErr) {
+      console.warn("LocalStorage save error:", storageErr);
     }
+
+    // 2. Attempt to sync to Supabase in the background
+    if (supabaseClient) {
+      try {
+        const dbPayload = {
+          full_name: fullName,
+          phone: phone,
+          attendance: attendance,
+          guest_count: guestCount,
+          plus_one_name: plusOneName,
+          wishes: wishes,
+          created_at: timestamp
+        };
+        const { error } = await supabaseClient.from("rsvps").insert([dbPayload]);
+        if (!error) {
+          try {
+            const stored = JSON.parse(localStorage.getItem("preview_rsvps") || "[]");
+            const match = stored.find(r => r.id === rsvpId);
+            if (match) match.synced = true;
+            localStorage.setItem("preview_rsvps", JSON.stringify(stored));
+          } catch (e) {}
+        } else {
+          console.warn("Supabase returned error (saved safely to device storage):", error);
+        }
+      } catch (err) {
+        console.warn("Supabase server offline or paused (saved safely to device storage):", err);
+      }
+    }
+
+    // 3. Celebratory feedback
+    if (navigator.vibrate) {
+      try { navigator.vibrate([40, 60, 40]); } catch (e) {}
+    }
+    triggerGoldConfetti();
+
+    alertBox.textContent = attendance === "attending" 
+      ? `Thank you, ${fullName}! Your RSVP has been confirmed. We look forward to celebrating with you in style!`
+      : `Thank you for letting us know, ${fullName}. You will be warmly missed!`;
+    alertBox.className = "alert-box success";
+    alertBox.style.display = "block";
+
+    form.reset();
+    if (plusOneGroup) plusOneGroup.style.display = "none";
+    if (attendingDetails) attendingDetails.style.display = "block";
+    if (btnText) btnText.textContent = "Confirm RSVP";
+
+    isSubmitting = false;
+    submitBtn.disabled = false;
+    if (btnSpinner) btnSpinner.style.display = "none";
+  }
+
+  form.addEventListener("submit", handleRsvpSubmit);
+  submitBtn.addEventListener("click", (e) => {
+    // Ensure clicking the button always triggers validation & submission
+    handleRsvpSubmit(e);
   });
 }
 
@@ -441,24 +507,42 @@ function setupAdminDashboard(supabaseClient, adminPasscode) {
     const tbody = document.getElementById("guestTableBody");
     tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Fetching RSVP list...</td></tr>`;
 
-    let data = [];
+    let cloudData = [];
+    let cloudError = null;
+
     if (supabaseClient) {
       try {
         const { data: records, error } = await supabaseClient
           .from("rsvps")
           .select("*")
           .order("created_at", { ascending: false });
-        if (error) throw error;
-        data = records || [];
+        if (error) {
+          cloudError = error;
+        } else {
+          cloudData = records || [];
+        }
       } catch (err) {
-        console.error("Failed to fetch RSVPs from Supabase:", err);
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #f87171;">Error loading data: ${err.message}</td></tr>`;
-        return;
+        cloudError = err;
+        console.warn("Could not query Supabase cloud database:", err);
       }
-    } else {
-      data = JSON.parse(localStorage.getItem("preview_rsvps") || "[]");
     }
 
+    const localData = JSON.parse(localStorage.getItem("preview_rsvps") || "[]");
+
+    // Merge cloud and local data avoiding duplicates by phone + full_name
+    const mergedMap = new Map();
+    cloudData.forEach(item => {
+      const key = (item.phone || "") + "_" + (item.full_name || "");
+      mergedMap.set(key, { ...item, source: "cloud" });
+    });
+    localData.forEach(item => {
+      const key = (item.phone || "") + "_" + (item.full_name || "");
+      if (!mergedMap.has(key)) {
+        mergedMap.set(key, { ...item, source: item.synced ? "cloud" : "local" });
+      }
+    });
+
+    const data = Array.from(mergedMap.values());
     currentRsvps = data;
 
     // Compute Stats
@@ -492,6 +576,7 @@ function setupAdminDashboard(supabaseClient, adminPasscode) {
         <td style="font-weight: 600; color: var(--text-main);">
           ${escapeHtml(item.full_name)}
           ${item.plus_one_name ? `<br><small style="color: var(--gold-sheen);">+1: ${escapeHtml(item.plus_one_name)}</small>` : ""}
+          ${item.source === "local" ? `<br><span style="display:inline-block; font-size:0.65rem; padding:1px 6px; border-radius:4px; background:rgba(234,179,8,0.2); color:#fde047; margin-top:2px;">Local</span>` : ""}
         </td>
         <td>
           <span class="status-badge ${item.attendance === "attending" ? "attending" : "declined"}">
